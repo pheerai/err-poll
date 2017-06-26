@@ -2,5 +2,8 @@
 Name = Poll
 Module = poll
 
+[Python]
+Version = 3
+
 [Documentation]
 Description = let's decide what to do

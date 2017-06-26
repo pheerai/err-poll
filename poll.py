@@ -37,7 +37,7 @@ class PollEntry(object):
         keys = sorted(self._options.keys())
         for index, option in enumerate(keys):
             votes = self._options[option]
-            result += '%s %d. %s (%d votes)\n' % (drawbar(votes, total_votes), index+1, option, votes)
+            result += '{} {}. {} ({} votes)\n'.format(drawbar(votes, total_votes), index+1, option, votes)
 
         return result.strip()
 
@@ -86,7 +86,7 @@ class Poll(BotPlugin):
         return 'Poll removed.'
 
     @botcmd
-    def poll_list(self, mess, args):
+    def poll_list(self, *_):
         """List all polls."""
         if self['polls']:
             return 'All Polls:\n' + \
@@ -97,7 +97,7 @@ class Poll(BotPlugin):
     def poll_start(self, _, title):
         """Start a saved poll."""
         if self['current_poll']:
-            return '"%s" is currently running, use !poll end to finish it.' % self['current_poll']
+            return '"{}" is currently running, use !poll end to finish it.'.format(self['current_poll'])
 
         if not title:
             return 'usage: !poll start <poll_title>'
@@ -108,10 +108,10 @@ class Poll(BotPlugin):
         self.reset_poll(title)
         self['current_poll'] = title
 
-        return '%s:\n%s' % (title, str(self['polls'][title]))
+        return '{}:\n{}'.format(title, str(self['polls'][title]))
 
     @botcmd
-    def poll_end(self, _, args):
+    def poll_end(self, *_):
         """Stop the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -142,17 +142,17 @@ class Poll(BotPlugin):
 
             poll.options[option] = 0
 
-            return '%s:\n%s' % (current_poll, str(poll))
+            return '{}:\n{}'.format(current_poll, poll)
 
     @botcmd
-    def poll(self, _, args):
+    def poll(self, *_):
         """Show the currently running poll."""
         current_poll = self['current_poll']
 
         if not current_poll:
             return 'No active poll. Use !poll start to start a poll.'
 
-        return '%s:\n%s' % (current_poll, str(self['polls'][current_poll]))
+        return '{}:\n{}'.format(current_poll, self['polls'][current_poll])
 
     @botcmd
     def vote(self, msg, index):
@@ -171,7 +171,7 @@ class Poll(BotPlugin):
             poll = polls[current_poll]
             index = int(index)
             if index > len(poll.options) or index < 1:
-                return 'Please choose a number between 1 and %d (inclusive).' % len(poll.options)
+                return 'Please choose a number between 1 and {} (inclusive).'.format(poll.options.len)
 
             option = sorted(poll.options.keys())[index - 1]
 
@@ -185,7 +185,7 @@ class Poll(BotPlugin):
 
             poll.options[option] += 1
 
-            return '%s:\n%s' % (current_poll, str(poll))
+            return '{}:\n{}'.format(current_poll, poll)
 
     def reset_poll(self, title):
         with self.mutable('polls') as polls:
