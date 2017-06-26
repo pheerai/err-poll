@@ -6,7 +6,7 @@ from errbot.backends.xmpp import XMPPPerson
 
 
 class Poll(BotPlugin):
-    def activate(self) -> None:
+    def activate(self):
         super().activate()
 
         # initial setup
@@ -16,7 +16,7 @@ class Poll(BotPlugin):
             self['polls'] = {}
 
     @botcmd
-    def poll_new(self, _, title) -> str:
+    def poll_new(self, _, title):
         """Create a new poll.
         usage: !poll new <poll_title>
         """
@@ -35,7 +35,7 @@ class Poll(BotPlugin):
         return 'Poll created. Use !poll option to add options.'
 
     @botcmd
-    def poll_remove(self, _, title) -> str:
+    def poll_remove(self, _, title):
         """Remove a poll."""
         if not title:
             return 'usage: !poll remove <poll_title>'
@@ -48,7 +48,7 @@ class Poll(BotPlugin):
         return 'Poll removed.'
 
     @botcmd
-    def poll_list(self, _, args) -> str:
+    def poll_list(self, _, args):
         """List all polls."""
         if self['polls']:
             return 'All Polls:\n' + \
@@ -56,7 +56,7 @@ class Poll(BotPlugin):
         return 'No polls found. Use !poll new to add one.'
 
     @botcmd
-    def poll_start(self, _, title) -> str:
+    def poll_start(self, _, title):
         """Start a saved poll."""
         if self['current_poll']:
             return '"{}" is currently running, use !poll end to finish it.'.format(self['current_poll'])
@@ -73,7 +73,7 @@ class Poll(BotPlugin):
         return '{}:\n{}'.format(title, str(self['polls'][title]))
 
     @botcmd
-    def poll_end(self, _, args) -> str:
+    def poll_end(self, _, args):
         """Stop the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -87,7 +87,7 @@ class Poll(BotPlugin):
         return result
 
     @botcmd
-    def poll_option(self, _, option) -> str:
+    def poll_option(self, _, option):
         """Add an option to the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -107,7 +107,7 @@ class Poll(BotPlugin):
             return '{}:\n{}'.format(current_poll, str(poll))
 
     @botcmd
-    def poll(self, _, args) -> str:
+    def poll(self, _, args):
         """Show the currently running poll."""
         current_poll = self['current_poll']
 
@@ -117,7 +117,7 @@ class Poll(BotPlugin):
         return '{}:\n{}'.format(current_poll, str(self['polls'][current_poll]))
 
     @botcmd
-    def vote(self, msg, index) -> str:
+    def vote(self, msg, index):
         """Vote for the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -151,7 +151,7 @@ class Poll(BotPlugin):
 
             return 'Your vote for {} has been cast.'.format(current_poll)
 
-    def reset_poll(self, title) -> None:
+    def reset_poll(self, title):
         with self.mutable('polls') as polls:
             poll = polls[title]
             for option in poll.options:
@@ -169,14 +169,14 @@ class PollEntry(object):
         self._has_voted = []
 
     @property
-    def options(self) -> Mapping[str, int]:
+    def options(self):
         return self._options
 
     @property
-    def has_voted(self) -> List[Identifier]:
+    def has_voted(self):
         return self._has_voted
 
-    def __str__(self) -> str:
+    def __str__(self):
         total_votes = sum(self._options.values())
 
         result = ''
@@ -193,7 +193,7 @@ BAR_WIDTH = 15.0
 CONFERENCE_DOMAIN_LIST = ["room", "rooms", "conference", "conferences", "conf", "muc"]
 
 
-def drawbar(value, max_) -> str:
+def drawbar(value, max_):
     if max_:
         value_in_chr = int(round((value * BAR_WIDTH / max_)))
     else:
@@ -201,17 +201,17 @@ def drawbar(value, max_) -> str:
     return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
 
 
-def domain_is_conference_service(domain: str) -> bool:
+def domain_is_conference_service(domain):
     sub_domains = domain.split(".")
     assert (len(sub_domains) != 0)
     first_sub = sub_domains[0]
     return first_sub in CONFERENCE_DOMAIN_LIST
 
 
-def peer_account_name(msg) -> str:
+def peer_account_name(msg):
     """Returns the Nick of the sender of a message"""
     assert msg
-    from_data: XMPPPerson = msg.frm
+    from_data = msg.frm
     if msg.is_group:
         return from_data.resource  # pragma: no cover
     elif msg.is_direct:
