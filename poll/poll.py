@@ -2,6 +2,7 @@ from typing import Mapping, List
 
 from errbot import botcmd, BotPlugin
 from errbot.backends.base import Identifier
+from errbot.backends.xmpp import XMPPPerson
 
 
 class Poll(BotPlugin):
@@ -47,7 +48,7 @@ class Poll(BotPlugin):
         return 'Poll removed.'
 
     @botcmd
-    def poll_list(self, *_) -> str:
+    def poll_list(self, _, args) -> str:
         """List all polls."""
         if self['polls']:
             return 'All Polls:\n' + \
@@ -72,7 +73,7 @@ class Poll(BotPlugin):
         return '{}:\n{}'.format(title, str(self['polls'][title]))
 
     @botcmd
-    def poll_end(self, *_) -> str:
+    def poll_end(self, _, args) -> str:
         """Stop the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -103,17 +104,17 @@ class Poll(BotPlugin):
 
             poll.options[option] = 0
 
-            return '{}:\n{}'.format(current_poll, poll)
+            return '{}:\n{}'.format(current_poll, str(poll))
 
     @botcmd
-    def poll(self, *_) -> str:
+    def poll(self, _, args) -> str:
         """Show the currently running poll."""
         current_poll = self['current_poll']
 
         if not current_poll:
             return 'No active poll. Use !poll start to start a poll.'
 
-        return '{}:\n{}'.format(current_poll, self['polls'][current_poll])
+        return '{}:\n{}'.format(current_poll, str(self['polls'][current_poll]))
 
     @botcmd
     def vote(self, msg, index) -> str:
@@ -139,14 +140,19 @@ class Poll(BotPlugin):
             if option not in poll.options:
                 return 'Option not found. Use !poll show to see all options of the current poll.'
 
-            if msg.frm in poll.has_voted:
+            message_from = peer_account_name(msg)
+            self.log.debug("Sender: {}".format(message_from))
+
+            if message_from in poll.has_voted:
                 return 'You have already voted.'
 
-            poll.has_voted.append(msg.frm)
+            poll.has_voted.append(message_from)
 
             poll.options[option] += 1
 
-            return '{}:\n{}'.format(current_poll, poll)
+            retval = '{}:\n{}'.format(current_poll, str(poll))
+            self.log.debug("Voting answer: \n{}".format(retval))
+            return retval
 
     def reset_poll(self, title) -> None:
         with self.mutable('polls') as polls:
@@ -184,6 +190,7 @@ class PollEntry(object):
         return result.strip()
 
 
+# region > Utility functions
 def drawbar(value, max_) -> str:
     if max_:
         value_in_chr = int(round((value * BAR_WIDTH / max_)))
@@ -191,5 +198,35 @@ def drawbar(value, max_) -> str:
         value_in_chr = 0
     return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
 
+CONFERENCE_DOMAIN_LIST = ["room", "rooms", "conference", "conferences", "conf", "muc"]
+
+
+def domain_is_conference_service(domain: str) -> bool:
+    sub_domains = domain.split(".")
+    assert(len(sub_domains) != 0)
+    first_sub = sub_domains[0]
+    return first_sub in CONFERENCE_DOMAIN_LIST
+
+
+def peer_account_name(msg) -> str:
+    """Returns the Nick of the sender of a message"""
+    import logging
+    assert msg
+    from_data : XMPPPerson = msg.frm
+    if msg.is_group:
+        return from_data.resource  # pragma: no cover
+    elif msg.is_direct:
+        # Direct messages can be both PMs within MUC or 1-1 messages.
+        # TODO: This contains the chat-service URL in hardcoded form and might produce errors,
+        # when there is no specialized subdomain!
+        if domain_is_conference_service(from_data.domain):
+            return from_data.resource
+        else:
+            return from_data.nick
+
+    else:
+        logging.debug("Missing type: " + str(type(from_data)))
+        assert False
+# endregion
 
 BAR_WIDTH = 15.0
