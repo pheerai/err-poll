@@ -2,8 +2,6 @@ from typing import Mapping, List
 
 from errbot.backends.base import Identifier
 
-from poll import drawbar
-
 
 class PollEntry(object):
     """
@@ -31,3 +29,14 @@ class PollEntry(object):
             result += '{} {}. {} ({} votes)\n'.format(drawbar(votes, total_votes), index+1, option, votes)
 
         return result.strip()
+
+
+def drawbar(value, max_) -> str:
+    if max_:
+        value_in_chr = int(round((value * BAR_WIDTH / max_)))
+    else:
+        value_in_chr = 0
+    return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
+
+
+BAR_WIDTH = 15.0

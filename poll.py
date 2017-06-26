@@ -2,16 +2,6 @@ from errbot import botcmd, BotPlugin
 
 from pollentry import PollEntry
 
-BAR_WIDTH = 15.0
-
-
-def drawbar(value, max_) -> str:
-    if max_:
-        value_in_chr = int(round((value * BAR_WIDTH / max_)))
-    else:
-        value_in_chr = 0
-    return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
-
 
 class Poll(BotPlugin):
     def activate(self) -> None:
