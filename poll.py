@@ -1,12 +1,11 @@
-from typing import List, Mapping
-
-from errbot.backends.base import Identifier
 from errbot import botcmd, BotPlugin
+
+from pollentry import PollEntry
 
 BAR_WIDTH = 15.0
 
 
-def drawbar(value, max_):
+def drawbar(value, max_) -> str:
     if max_:
         value_in_chr = int(round((value * BAR_WIDTH / max_)))
     else:
@@ -14,37 +13,8 @@ def drawbar(value, max_):
     return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
 
 
-class PollEntry(object):
-    """
-    This is just a data object that can be pickled.
-    """
-    def __init__(self):
-        self._options = {}
-        self._has_voted = []
-
-    @property
-    def options(self) -> Mapping[str, int]:
-        return self._options
-
-    @property
-    def has_voted(self) -> List[Identifier]:
-        return self._has_voted
-
-    def __str__(self) -> str:
-        total_votes = sum(self._options.values())
-
-        result = ''
-        keys = sorted(self._options.keys())
-        for index, option in enumerate(keys):
-            votes = self._options[option]
-            result += '{} {}. {} ({} votes)\n'.format(drawbar(votes, total_votes), index+1, option, votes)
-
-        return result.strip()
-
-
 class Poll(BotPlugin):
-
-    def activate(self):
+    def activate(self) -> None:
         super().activate()
 
         # initial setup
@@ -54,7 +24,7 @@ class Poll(BotPlugin):
             self['polls'] = {}
 
     @botcmd
-    def poll_new(self, _, title):
+    def poll_new(self, _, title) -> str:
         """Create a new poll.
         usage: !poll new <poll_title>
         """
@@ -73,7 +43,7 @@ class Poll(BotPlugin):
         return 'Poll created. Use !poll option to add options.'
 
     @botcmd
-    def poll_remove(self, _, title):
+    def poll_remove(self, _, title) -> str:
         """Remove a poll."""
         if not title:
             return 'usage: !poll remove <poll_title>'
@@ -86,7 +56,7 @@ class Poll(BotPlugin):
         return 'Poll removed.'
 
     @botcmd
-    def poll_list(self, *_):
+    def poll_list(self, *_) -> str:
         """List all polls."""
         if self['polls']:
             return 'All Polls:\n' + \
@@ -94,7 +64,7 @@ class Poll(BotPlugin):
         return 'No polls found. Use !poll new to add one.'
 
     @botcmd
-    def poll_start(self, _, title):
+    def poll_start(self, _, title) -> str:
         """Start a saved poll."""
         if self['current_poll']:
             return '"{}" is currently running, use !poll end to finish it.'.format(self['current_poll'])
@@ -111,7 +81,7 @@ class Poll(BotPlugin):
         return '{}:\n{}'.format(title, str(self['polls'][title]))
 
     @botcmd
-    def poll_end(self, *_):
+    def poll_end(self, *_) -> str:
         """Stop the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -125,7 +95,7 @@ class Poll(BotPlugin):
         return result
 
     @botcmd
-    def poll_option(self, _, option):
+    def poll_option(self, _, option) -> str:
         """Add an option to the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -145,7 +115,7 @@ class Poll(BotPlugin):
             return '{}:\n{}'.format(current_poll, poll)
 
     @botcmd
-    def poll(self, *_):
+    def poll(self, *_) -> str:
         """Show the currently running poll."""
         current_poll = self['current_poll']
 
@@ -155,7 +125,7 @@ class Poll(BotPlugin):
         return '{}:\n{}'.format(current_poll, self['polls'][current_poll])
 
     @botcmd
-    def vote(self, msg, index):
+    def vote(self, msg, index) -> str:
         """Vote for the currently running poll."""
         current_poll = self['current_poll']
         if not current_poll:
@@ -187,7 +157,7 @@ class Poll(BotPlugin):
 
             return '{}:\n{}'.format(current_poll, poll)
 
-    def reset_poll(self, title):
+    def reset_poll(self, title) -> None:
         with self.mutable('polls') as polls:
             poll = polls[title]
             for option in poll.options:
