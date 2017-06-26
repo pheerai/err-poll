@@ -141,7 +141,6 @@ class Poll(BotPlugin):
                 return 'Option not found. Use !poll show to see all options of the current poll.'
 
             message_from = peer_account_name(msg)
-            self.log.debug("Sender: {}".format(message_from))
 
             if message_from in poll.has_voted:
                 return 'You have already voted.'
@@ -150,9 +149,7 @@ class Poll(BotPlugin):
 
             poll.options[option] += 1
 
-            retval = '{}:\n{}'.format(current_poll, str(poll))
-            self.log.debug("Voting answer: \n{}".format(retval))
-            return retval
+            return 'Your vote for {} has been cast.'.format(current_poll)
 
     def reset_poll(self, title) -> None:
         with self.mutable('polls') as polls:
@@ -166,6 +163,7 @@ class PollEntry(object):
     """
     This is just a data object that can be pickled.
     """
+
     def __init__(self):
         self._options = {}
         self._has_voted = []
@@ -185,12 +183,16 @@ class PollEntry(object):
         keys = sorted(self._options.keys())
         for index, option in enumerate(keys):
             votes = self._options[option]
-            result += '{} {}. {} ({} votes)\n'.format(drawbar(votes, total_votes), index+1, option, votes)
+            result += '{} {}. {} ({} votes)\n'.format(drawbar(votes, total_votes), index + 1, option, votes)
 
         return result.strip()
 
 
 # region > Utility functions
+BAR_WIDTH = 15.0
+CONFERENCE_DOMAIN_LIST = ["room", "rooms", "conference", "conferences", "conf", "muc"]
+
+
 def drawbar(value, max_) -> str:
     if max_:
         value_in_chr = int(round((value * BAR_WIDTH / max_)))
@@ -198,26 +200,23 @@ def drawbar(value, max_) -> str:
         value_in_chr = 0
     return '[' + '█' * value_in_chr + '▒' * int(round(BAR_WIDTH - value_in_chr)) + ']'
 
-CONFERENCE_DOMAIN_LIST = ["room", "rooms", "conference", "conferences", "conf", "muc"]
-
 
 def domain_is_conference_service(domain: str) -> bool:
     sub_domains = domain.split(".")
-    assert(len(sub_domains) != 0)
+    assert (len(sub_domains) != 0)
     first_sub = sub_domains[0]
     return first_sub in CONFERENCE_DOMAIN_LIST
 
 
 def peer_account_name(msg) -> str:
     """Returns the Nick of the sender of a message"""
-    import logging
     assert msg
-    from_data : XMPPPerson = msg.frm
+    from_data: XMPPPerson = msg.frm
     if msg.is_group:
         return from_data.resource  # pragma: no cover
     elif msg.is_direct:
         # Direct messages can be both PMs within MUC or 1-1 messages.
-        # TODO: This contains the chat-service URL in hardcoded form and might produce errors,
+        # TODO: This contains the chat-service URLs in hardcoded form and might produce errors,
         # when there is no specialized subdomain!
         if domain_is_conference_service(from_data.domain):
             return from_data.resource
@@ -225,8 +224,8 @@ def peer_account_name(msg) -> str:
             return from_data.nick
 
     else:
-        logging.debug("Missing type: " + str(type(from_data)))
+        import logging
+        logging.error("Missing type: " + str(type(from_data)))
         assert False
-# endregion
 
-BAR_WIDTH = 15.0
+# endregion
